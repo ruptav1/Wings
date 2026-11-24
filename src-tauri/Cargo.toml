@@ -1,0 +1,47 @@
+[package]
+name = "unknowweb"
+version = "0.1.0"
+description = "Unknow Web Browser"
+edition = "2021"
+
+[lib]
+name = "unknowweb_lib"
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["unstable", "devtools"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+dirs = "6"
+ureq = "2"
+regex = "1"
+addr = "0.15"
+sha2 = "0.10"
+flate2 = "1"
+adblock = { version = "0.10", default-features = false, features = ["embedded-domain-resolver", "full-regex-handling"] }
+# the same versions wry (Tauri's WebView2 layer) is built with, to reach WebView2's own API
+webview2-com = "0.39"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+aes = "0.8"
+cbc = { version = "0.1", features = ["alloc"] }
+windows = { version = "0.62", features = [
+  "Win32_Foundation",
+  "Win32_System_Com",
+  "Win32_System_Com_StructuredStorage",
+  "Win32_System_ProcessStatus",
+  "Win32_System_Threading",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
+] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

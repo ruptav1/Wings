@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Dấu trang</title>
+    <link rel="stylesheet" href="../../shared/base.css" />
+    <link rel="stylesheet" href="../../shared/page.css" />
+    <style>
+      .split { display: grid; grid-template-columns: 220px 1fr; gap: 16px; }
+      .folders .f { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: var(--radius); cursor: default; }
+      .folders .f:hover { background: var(--hover); }
+      .folders .f.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+      .list-row.drag-over { box-shadow: inset 0 2px 0 var(--accent); }
+      .folders .f.drop { outline: 2px dashed var(--accent); }
+    </style>
+    <script type="module" src="bookmarks.js"></script>
+  </head>
+  <body>
+    <div class="page">
+      <div class="page-head">
+        <h1>Dấu trang</h1>
+        <input id="q" type="search" placeholder="Tìm dấu trang" />
+      </div>
+      <div class="toolbar-row">
+        <button id="add-folder" class="btn">Thư mục mới</button>
+        <button id="import" class="btn">Nhập từ file HTML…</button>
+        <button id="export" class="btn">Xuất ra file HTML</button>
+        <input id="file" type="file" accept=".html,.htm" hidden />
+      </div>
+      <div class="split">
+        <div class="folders card" id="folders"></div>
+        <div class="card" id="items"></div>
+      </div>
+    </div>
+  </body>
+</html>

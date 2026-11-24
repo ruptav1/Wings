@@ -1,0 +1,8 @@
+{
+  "google": { "name": "Google", "url": "https://www.google.com/search?q=%s", "suggest": "https://suggestqueries.google.com/complete/search?client=firefox&q=%s" },
+  "bing": { "name": "Bing", "url": "https://www.bing.com/search?q=%s", "suggest": "https://api.bing.com/osjson.aspx?query=%s" },
+  "duckduckgo": { "name": "DuckDuckGo", "url": "https://duckduckgo.com/?q=%s", "suggest": "https://duckduckgo.com/ac/?type=list&q=%s" },
+  "brave": { "name": "Brave", "url": "https://search.brave.com/search?q=%s", "suggest": null },
+  "coccoc": { "name": "Cốc Cốc", "url": "https://coccoc.com/search?query=%s", "suggest": null },
+  "custom": { "name": "Tùy chỉnh", "url": null, "suggest": null }
+}

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Trình quản lý tác vụ</title>
+    <link rel="stylesheet" href="../../shared/base.css" />
+    <link rel="stylesheet" href="../../shared/page.css" />
+    <style>
+      body { display: flex; flex-direction: column; height: 100vh; }
+      header { display: flex; align-items: center; gap: 12px; padding: 14px 16px 8px; }
+      header h1 { margin: 0; font-size: 16px; flex: 1; }
+      .wrap { flex: 1; overflow: auto; padding: 0 12px; }
+      table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+      th { position: sticky; top: 0; background: var(--bg); text-align: left; font-weight: 600; color: var(--text-2); padding: 8px 10px; border-bottom: 1px solid var(--line); cursor: pointer; white-space: nowrap; }
+      th.num, td.num { text-align: right; }
+      td { padding: 7px 10px; border-bottom: 1px solid var(--line); }
+      tr.sel td { background: var(--accent-soft); }
+      tr:hover td { background: var(--hover); }
+      td .name { display: flex; align-items: center; gap: 8px; }
+      td .name small { color: var(--text-3); }
+      .kind { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--hover); color: var(--text-2); }
+      footer { display: flex; align-items: center; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--line); }
+      footer .grow { flex: 1; color: var(--text-2); }
+    </style>
+    <script type="module" src="taskmgr.js"></script>
+  </head>
+  <body>
+    <header><h1>Trình quản lý tác vụ</h1><span class="muted" id="hint">Cập nhật mỗi 2 giây</span></header>
+    <div class="wrap">
+      <table>
+        <thead><tr><th data-k="name">Tác vụ</th><th class="num" data-k="private">Bộ nhớ</th><th class="num" data-k="cpu">CPU</th><th class="num" data-k="pid">ID tiến trình</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <footer><span class="grow" id="total"></span><button id="kill" class="btn danger" disabled>Kết thúc tiến trình</button></footer>
+  </body>
+</html>

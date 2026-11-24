@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+  <title id="title">Wings logo — Concept C (Plume W v5)</title>
+  <!-- C v5 - Plume W: refined airy calligraphic W with outward-flaring paired curved wing plumes -->
+  <path fill="#000000" d="M 128,90 C 116,90 105,126 92,162 C 76,118 52,66 14,46 C 26,76 42,102 56,124 C 60,131 50,139 42,133 C 32,126 24,120 16,114 C 30,152 50,186 74,203 C 84,210 97,207 103,195 C 113,172 120,146 128,134 C 136,146 143,172 153,195 C 159,207 172,210 182,203 C 206,186 226,152 240,114 C 232,120 224,126 214,133 C 206,139 196,131 200,124 C 214,102 230,76 242,46 C 204,66 180,118 164,162 C 151,126 140,90 128,90 Z"/>
+</svg>

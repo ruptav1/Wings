@@ -1,0 +1,10 @@
+{
+  "folders": [
+    { "id": "bar", "name": "Thanh dấu trang", "system": true },
+    { "id": "other", "name": "Dấu trang khác", "system": true }
+  ],
+  "items": [
+    { "id": "b-yt", "url": "https://www.youtube.com/", "title": "YouTube", "folder": "bar", "created": 0 },
+    { "id": "b-gh", "url": "https://github.com/", "title": "GitHub", "folder": "bar", "created": 0 }
+  ]
+}

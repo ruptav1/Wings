@@ -1,0 +1,17 @@
+[package]
+name = "unknowweb-launcher"
+version = "0.3.0"
+edition = "2021"
+description = "Starts Wings (its own app on the Gecko engine) with its profile beside it"
+
+[[bin]]
+name = "launcher"
+path = "src/main.rs"
+
+[dependencies]
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
+panic = "abort"

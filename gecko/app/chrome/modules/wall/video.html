@@ -1,0 +1,33 @@
+<!doctype html>
+<!-- A video wallpaper, played in a page of its own (TabHost.wallPage, behind the interface) rather than in
+     the interface: a page's videos are decoded by the graphics card (the engine allows that only outside
+     the interface's process), so a 4K 60 fps wallpaper costs little.
+     What to play comes after the #: src (its address), rate (speed), filter (CSS), pos (object-position),
+     play (1 / 0). A change of the # alone is applied in place: the video goes on from where it was. -->
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+  video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .4s; }
+  video.shown { opacity: 1; }
+</style>
+<video muted loop playsinline disablepictureinpicture></video>
+<script>
+  const v = document.querySelector('video');
+  v.addEventListener('playing', () => v.classList.add('shown'));
+  function apply() {
+    const p = new URLSearchParams(location.hash.slice(1));
+    const src = p.get('src') || '';
+    if (v.getAttribute('src') !== src) {
+      v.classList.remove('shown');
+      if (src) v.src = src;
+      else (v.removeAttribute('src'), v.load());
+    }
+    v.playbackRate = Number(p.get('rate')) || 1;
+    v.style.filter = p.get('filter') || '';
+    v.style.objectPosition = p.get('pos') || 'center';
+    if (src && p.get('play') !== '0') v.play().catch(() => {});
+    else v.pause();
+  }
+  addEventListener('hashchange', apply);
+  apply();
+</script>

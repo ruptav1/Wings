@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Wings</title>
+    <link rel="icon" href="shared/logo-small.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="shared/base.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <style id="user-css"></style>
+    <script type="module" src="js/app.js"></script>
+  </head>
+  <body>
+    <div id="wallpaper"><video id="wall-video" muted loop playsinline hidden></video><div id="wall-dim"></div></div>
+
+    <div id="app">
+      <div id="zen-hot"></div>
+      <div id="chrome-top" class="chrome">
+        <header id="topbar">
+          <div id="brand" data-tauri-drag-region></div>
+          <div id="hstrip"></div>
+          <div class="drag-fill" data-tauri-drag-region></div>
+          <div id="caption">
+            <button class="cap" data-act="minimize" title="Thu nhỏ"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor"/></svg></button>
+            <button class="cap" data-act="maximize" title="Phóng to"><svg width="10" height="10" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="currentColor"/></svg></button>
+            <button class="cap close" data-act="close" title="Đóng"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor"/></svg></button>
+          </div>
+        </header>
+        <div id="toolbar"></div>
+        <nav id="bookmarks-bar" aria-label="Thanh dấu trang"></nav>
+      </div>
+
+      <div id="main">
+        <aside id="vtabs" class="chrome">
+          <div class="vtabs-head">
+            <button id="vtabs-collapse" class="icon-btn" title="Thu gọn / mở rộng" data-icon="sidebar"></button>
+            <span class="vtabs-label">Tab</span>
+            <button id="vtabs-new" class="icon-btn" title="Tab mới (Ctrl+T)" data-icon="plus"></button>
+          </div>
+          <div id="vstrip"></div>
+        </aside>
+
+        <aside id="sidebar" class="chrome">
+          <div id="sidebar-rail"></div>
+          <div id="sidebar-panel"></div>
+          <div class="resizer"></div>
+        </aside>
+
+        <section id="content">
+          <div id="findbar" hidden></div>
+          <div id="viewport"></div>
+          <div id="split-handle" hidden></div>
+          <div id="freeze" hidden></div>
+        </section>
+      </div>
+    </div>
+
+    <div id="layer"></div>
+    <div class="edge n" data-dir="North"></div><div class="edge s" data-dir="South"></div>
+    <div class="edge e" data-dir="East"></div><div class="edge w" data-dir="West"></div>
+    <div class="edge ne" data-dir="NorthEast"></div><div class="edge nw" data-dir="NorthWest"></div>
+    <div class="edge se" data-dir="SouthEast"></div><div class="edge sw" data-dir="SouthWest"></div>
+  </body>
+</html>

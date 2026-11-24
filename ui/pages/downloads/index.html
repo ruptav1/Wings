@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tải xuống</title>
+    <link rel="stylesheet" href="../../shared/base.css" />
+    <link rel="stylesheet" href="../../shared/page.css" />
+    <style>
+      .bar { height: 4px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 6px; }
+      .bar i { display: block; height: 100%; background: var(--accent); }
+      .list-row .acts { opacity: 1; }
+    </style>
+    <script type="module" src="downloads.js"></script>
+  </head>
+  <body>
+    <div class="page">
+      <div class="page-head">
+        <h1>Tải xuống</h1>
+        <input id="q" type="search" placeholder="Tìm tệp đã tải" />
+        <button id="clear" class="btn">Xóa danh sách</button>
+      </div>
+      <div class="card" id="list"></div>
+    </div>
+  </body>
+</html>

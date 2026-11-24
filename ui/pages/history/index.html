@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lịch sử</title>
+    <link rel="stylesheet" href="../../shared/base.css" />
+    <link rel="stylesheet" href="../../shared/page.css" />
+    <style>
+      #mode { display: inline-flex; gap: 2px; padding: 3px; margin-bottom: 14px; border-radius: 10px; background: var(--surface-solid); border: 1px solid var(--line); }
+      #mode button { border: 0; background: none; color: var(--text-2); font: inherit; padding: 6px 14px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+      #mode button.on { background: var(--accent-soft); color: var(--accent-strong, var(--accent)); font-weight: 600; }
+      .group-row { cursor: pointer; }
+      .group-icons { display: flex; gap: 2px; flex: none; }
+      .group-icons .fav { width: 16px; height: 16px; }
+      .group-tabs { padding: 0 0 6px 76px; }
+      .group-tabs .list-row { min-height: 36px; cursor: pointer; }
+      .scan-row { cursor: pointer; }
+      .scan-ico { display: flex; width: 20px; justify-content: center; flex: none; color: #2f9a6a; }
+      .scan-row.lv-bad .scan-ico, .scan-row.lv-bad .sub { color: #d64545; }
+      .scan-row.lv-warn .scan-ico, .scan-row.lv-warn .sub { color: #b7860b; }
+      .list-row .acts .btn { display: inline-flex; align-items: center; gap: 4px; }
+    </style>
+    <script type="module" src="history.js"></script>
+  </head>
+  <body>
+    <div class="page">
+      <div class="page-head">
+        <h1>Lịch sử</h1>
+        <input id="q" type="search" placeholder="Tìm trong lịch sử" />
+        <button id="clear" class="btn">Xóa dữ liệu duyệt web…</button>
+        <button id="clear-list" class="btn" hidden>Xóa danh sách</button>
+      </div>
+      <div id="mode">
+        <button data-mode="pages" >Trang đã xem</button>
+        <button data-mode="groups" >Cửa sổ đã đóng</button>
+        <button data-mode="scans" >Đã quét</button>
+      </div>
+      <div id="list"></div>
+      <div id="more" class="empty" hidden><button class="btn">Xem thêm</button></div>
+    </div>
+  </body>
+</html>

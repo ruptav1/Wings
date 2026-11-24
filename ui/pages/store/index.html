@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Kho hình nền</title>
+    <link rel="stylesheet" href="../../shared/base.css" />
+    <link rel="stylesheet" href="store.css" />
+    <script type="module" src="store.js"></script>
+  </head>
+  <body>
+    <main class="store">
+      <header class="store-head">
+        <h1><span data-icon="image" data-size="22"></span><span>Kho hình nền</span></h1>
+        <nav class="store-tabs" role="tablist">
+          <button class="tab on" data-tab="videos" role="tab"><span data-icon="video" data-size="15"></span><span>Video nền</span></button>
+          <button class="tab" data-tab="images" role="tab"><span data-icon="image" data-size="15"></span><span>Ảnh nền</span></button>
+          <button class="tab" data-tab="mine" role="tab"><span data-icon="download" data-size="15"></span><span>Đã tải</span><b id="mine-count"></b></button>
+          <i class="tab-ink"></i>
+        </nav>
+      </header>
+
+      <form id="search" class="store-search" data-for="videos images">
+        <span data-icon="search" data-size="18"></span>
+        <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Tìm video nền…" />
+        <button class="btn primary" type="submit">Tìm</button>
+      </form>
+
+      <div class="store-filters" data-for="videos">
+        <div id="sites" class="chips"></div>
+        <span class="grow"></span>
+        <select id="res">
+          <option value="0">Mọi độ phân giải</option>
+          <option value="1080">Từ 1080p</option>
+          <option value="1440">Từ 1440p</option>
+          <option value="2160">4K</option>
+        </select>
+      </div>
+
+      <div class="store-filters" data-for="images" hidden>
+        <select id="w-cat" title="Loại ảnh">
+          <option value="anime">Anime</option>
+          <option value="general">Phong cảnh, chung</option>
+          <option value="all">Tất cả</option>
+        </select>
+        <select id="w-res" title="Độ phân giải tối thiểu">
+          <option value="1080p">Từ 1080p</option>
+          <option value="1440p">Từ 1440p</option>
+          <option value="4k">4K trở lên</option>
+        </select>
+        <select id="w-sort" title="Sắp xếp">
+          <option value="favorites">Được thích nhiều</option>
+          <option value="relevance">Liên quan nhất</option>
+          <option value="views">Xem nhiều</option>
+          <option value="date_added">Mới tải lên</option>
+          <option value="toplist">Nổi bật</option>
+          <option value="random">Ngẫu nhiên</option>
+        </select>
+        <label class="check"><span class="switch"><input id="w-preai" type="checkbox" /><span></span></span><span>Chỉ ảnh trước 08/2022 (chắc chắn không phải AI)</span></label>
+      </div>
+      <div id="w-chips" class="chips suggest-chips" data-for="images" hidden></div>
+
+      <div id="status" class="store-status" data-for="videos images"></div>
+
+      <section data-for="videos">
+        <div id="grid" class="store-grid"></div>
+        <div class="store-more"><button id="more" class="btn" hidden>Xem thêm</button></div>
+      </section>
+      <section data-for="images" hidden>
+        <div id="w-grid" class="store-grid images"></div>
+        <div class="store-more"><button id="w-more" class="btn" hidden>Xem thêm</button></div>
+      </section>
+      <section data-for="mine" hidden>
+        <div class="store-filters">
+          <div id="mine-kinds" class="chips">
+            <button class="chip on" data-kind="all">Tất cả</button>
+            <button class="chip" data-kind="video">Video</button>
+            <button class="chip" data-kind="image">Ảnh</button>
+          </div>
+          <span class="grow"></span>
+          <button id="open-folder" class="btn"><span data-icon="folder" data-size="15"></span><span>Mở thư mục</span></button>
+        </div>
+        <div id="mine-grid" class="store-grid"></div>
+      </section>
+    </main>
+    <dialog id="detail" class="store-detail"></dialog>
+  </body>
+</html>

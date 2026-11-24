@@ -1,0 +1,16 @@
+# builds
+node_modules/
+**/target/
+src-tauri/gen/
+gecko/Wings.exe
+gecko/app/unkcore.dll
+# made by gecko/tools/sync-ui.mjs from ui/
+gecko/app/chrome/content/ui/
+# the Gecko engine (a Firefox build, renamed by gecko/tools/rebrand.ps1)
+gecko/engine/
+# browsing data
+profile/
+gecko/profile/
+*.log
+run.out
+.npmrc

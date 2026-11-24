@@ -1,0 +1,24 @@
+content unknowweb chrome/content/
+resource unknowweb chrome/modules/
+
+# Firefox's own parts that come built into the engine are not used: each entry is pointed at nothing.
+# (Firefox's command line and first-window handling: the engine's default one opens this app's window)
+category command-line-handler m-browser @unknowweb/none;1
+category command-line-handler x-default @unknowweb/none;1
+category command-line-handler l-taskbar-tabs @unknowweb/none;1
+category command-line-handler l-windows-default @unknowweb/none;1
+category command-line-handler m-devtools @unknowweb/none;1
+category command-line-handler m-sps @unknowweb/none;1
+category command-line-handler m-push-receive-push-messages @unknowweb/none;1
+# (Firefox's JSON viewer belongs to its developer tools)
+category net-content-sniffers JSONView @unknowweb/none;1
+# (no updates, telemetry or remote settings from Mozilla)
+category update-timer nsUpdateService @unknowweb/none;1
+category update-timer addonManager @unknowweb/none;1
+category update-timer amGleanDaily @unknowweb/none;1
+category update-timer RemoteSettingsComponents @unknowweb/none;1
+category profile-after-change TelemetryStartup @unknowweb/none;1
+category profile-after-change nsUpdateServiceStub @unknowweb/none;1
+category profile-after-change EssentialDomainsRemoteSettings @unknowweb/none;1
+category profile-after-change InstallerPrefs @unknowweb/none;1
+category idle-daily ContentBlockingTelemetryService @unknowweb/none;1

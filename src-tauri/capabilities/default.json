@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "The browser's own pages (the shell and unk:// pages). Websites in tabs never get this: they are remote origins and no remote URL is listed.",
+  "windows": ["*"],
+  "webviews": ["shell-*", "tab-*"],
+  "permissions": ["core:default", "core:window:allow-start-dragging", "core:window:allow-start-resize-dragging", "core:window:allow-unmaximize", "core:window:allow-maximize","core:window:allow-minimize", "core:window:allow-toggle-maximize", "core:window:allow-close", "core:window:allow-set-fullscreen", "core:window:allow-is-fullscreen", "core:window:allow-is-maximized"]
+}

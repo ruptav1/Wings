@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "general": {
+    "userName": "",
+    "language": "vi",
+    "startup": "restore",
+    "homepage": "unk://newtab",
+    "searchEngine": "google",
+    "customSearchUrl": "https://www.google.com/search?q=%s",
+    "searchSuggestions": true,
+    "askDownloadLocation": false,
+    "downloadDir": "",
+    "tabSleepMinutes": 30,
+    "tabFreezeMinutes": 5,
+    "smoothScrolling": true,
+    "checkUpdates": true,
+    "updateRepo": "",
+    "scanDownloads": true,
+    "scanTab": "risky",
+    "vtUpload": "risky"
+  },
+  "appearance": {
+    "preset": "slate",
+    "dark": false,
+    "accent": "#3d7bea",
+    "bg": "#eef1f6",
+    "surface": "#fbfcfe",
+    "text": "#1d2430",
+    "chromeStyle": "clear",
+    "autoColor": true,
+    "auto": null,
+    "surfaceOpacity": 0.72,
+    "clearScrim": 0.3,
+    "blur": 18,
+    "font": "\"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif",
+    "fontSize": 13,
+    "radius": 10,
+    "density": "comfortable",
+    "tabStyle": "pill",
+    "animations": true,
+    "pageScheme": "theme",
+    "customCSS": "",
+    "customFonts": [],
+    "cursor": {
+      "set": "system",
+      "arrow": null,
+      "hand": null,
+      "text": null,
+      "pages": true
+    },
+    "clearBookmarks": true,
+    "clearClock": true
+  },
+  "wallpaper": {
+    "type": "image",
+    "image": "chrome://unknowweb/content/ui/assets/wallpapers/wings-default.jpg",
+    "video": "",
+    "videoRate": 1,
+    "motion": "focus",
+    "color": "#eef1f6",
+    "gradientFrom": "#dfe8f7",
+    "gradientTo": "#f3e9f4",
+    "gradientAngle": 135,
+    "dim": 0,
+    "blur": 0,
+    "saturate": 1,
+    "position": "center",
+    "frames": {},
+    "slideshowMinutes": 0,
+    "slideshow": [],
+    "web": {
+      "url": "",
+      "package": "",
+      "audio": false
+    },
+    "music": {},
+    "musicOn": true,
+    "musicVolume": 0.6,
+    "pauseForSound": "tabs"
+  },
+  "layout": {
+    "tabsPosition": "top",
+    "toolbarPosition": "top",
+    "verticalTabsWidth": 248,
+    "verticalTabsCollapsed": false,
+    "bookmarksBar": "newtab",
+    "contentInset": 6,
+    "contentRadius": 10,
+    "contentShadow": true,
+    "sidebarPosition": "left",
+    "sidebarWidth": 340,
+    "sidebarOpen": false,
+    "sidebarPanel": "bookmarks",
+    "showStatusBubble": true,
+    "tabCloseButton": "hover",
+    "toolbarItems": [
+      "back",
+      "forward",
+      "reload",
+      "home",
+      "omnibox",
+      "media",
+      "extensions",
+      "downloads",
+      "split",
+      "screenshot",
+      "sidebar",
+      "taskmgr",
+      "menu"
+    ],
+    "hiddenToolbarItems": [
+      "home",
+      "screenshot",
+      "taskmgr"
+    ]
+  },
+  "newtab": {
+    "showClock": true,
+    "clock24h": true,
+    "showSeconds": false,
+    "showGreeting": true,
+    "greetingText": "",
+    "showSearch": true,
+    "showSpeedDial": true,
+    "showCredit": false,
+    "speedDialColumns": 6,
+    "speedDial": [
+      {
+        "title": "YouTube",
+        "url": "https://www.youtube.com/"
+      },
+      {
+        "title": "Facebook",
+        "url": "https://www.facebook.com/"
+      },
+      {
+        "title": "GitHub",
+        "url": "https://github.com/"
+      },
+      {
+        "title": "Wikipedia",
+        "url": "https://vi.wikipedia.org/"
+      },
+      {
+        "title": "Reddit",
+        "url": "https://www.reddit.com/"
+      },
+      {
+        "title": "Gmail",
+        "url": "https://mail.google.com/"
+      }
+    ],
+    "showAnime": false,
+    "animeGenre": "Slice of Life",
+    "visualizer": false,
+    "showDate": true,
+    "hideTools": false,
+    "heroGlass": true,
+    "heroGlassMid": false,
+    "positions": {
+      "shown": null,
+      "hidden": null
+    }
+  },
+  "privacy": {
+    "adblock": true,
+    "adblockOff": [],
+    "doNotTrack": true,
+    "fingerprint": true,
+    "httpsUpgrade": true,
+    "blockThirdPartyCookies": true,
+    "cookieNotices": true,
+    "stripParams": true,
+    "debounce": true,
+    "clearOnExit": false,
+    "diskCacheMB": 200,
+    "warp": false
+  },
+  "shortcuts": {},
+  "sitePermissions": {},
+  "zoom": {},
+  "webPanels": [
+    {
+      "id": "wp-translate",
+      "title": "Google Dịch",
+      "url": "https://translate.google.com/"
+    }
+  ],
+  "pinnedApps": []
+}

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title">
+  <title id="title">Wings</title>
+  <!-- Wings: Sōyoku Kamon (the cut for 16-32 px) - twin gliding wings in Japanese kamon harmony, white & ice-pearl on crimson to rose (made by make-logo.mjs) -->
+  <defs>
+    <linearGradient id="bg" x1="0.1" y1="1" x2="0.9" y2="0"><stop offset="0" stop-color="#D43B7E"/><stop offset="0.55" stop-color="#EE75AA"/><stop offset="1" stop-color="#FBBAD5"/></linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="236" fill="url(#bg)"/>
+  <g transform="translate(108.8,108.8) scale(3.15)">
+    <path fill="#FFFFFF" d="M68,58C86,30 112,18 138,18C192,18 234,58 234,114C234,146 224,170 206,188C210,162 208,136 204,114C194,70 158,46 112,47C98,47 98,69 112,69C148,68 179,86 184,118C186,132 183,145 175,155C173,134 167,114 156,101C144,86 118,82 90,86C72,88 60,72 68,58Z"/>
+    <path fill="#E4F1FD" d="M188,198C170,226 144,238 118,238C64,238 22,198 22,142C22,110 32,86 50,68C46,94 48,120 52,142C62,186 98,210 144,209C158,209 158,187 144,187C108,188 77,170 72,138C70,124 73,111 81,101C83,122 89,142 100,155C112,170 138,174 166,170C184,168 196,184 188,198Z"/>
+  </g>
+</svg>

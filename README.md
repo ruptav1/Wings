@@ -1,5 +1,8 @@
 # Unknow Web Browser
 
+> **Wings** (bản dùng lõi Gecko của Mozilla) nằm trong [`gecko/`](gecko/README.md): bấm đúp
+> `gecko\setup.cmd` để tự tải bộ máy, dựng và chép giao diện, rồi mở `gecko\Wings.exe`.
+
 (Tên và logo tạm thời.)
 
 Trình duyệt nhẹ dựa trên **WebView2 có sẵn trong Windows** (Tauri 2 + Rust), mang các tính năng của TyranWeb nhưng không có nền web động Blue Archive / NIKKE / Azur Lane.

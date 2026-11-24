@@ -162,6 +162,24 @@ Sau này: Cài đặt → Giới thiệu → **Đồng bộ data từ TyranWeb**
 Hủy / Tiếp tục (nút đỏ) → khởi động lại. Thử lời hỏi với bản TyranWeb cũ hơn: biến môi
 trường `UNK_TEST_TYRAN_VERSION=1.8.0` (chỉ để thử).
 
+## Cài từ mã nguồn (tự động)
+
+Sau khi tải mã nguồn về (clone hoặc Download ZIP), bấm đúp `gecko\setup.cmd` (hoặc
+`powershell -ExecutionPolicy Bypass -File gecko\setup.ps1`). Script tự làm hết, mọi thứ nằm trong `gecko\`:
+
+1. **Bộ máy** `engine\`: tải Firefox 160.0.1 chính thức (bản tiếng Việt) từ máy chủ của Mozilla (khoảng
+   92 MB), kiểm tra mã SHA-512 và chữ ký số của Mozilla, rồi lấy phần lõi ra bằng `tar.exe` có sẵn của
+   Windows — không chạy bộ cài, không cài Firefox vào máy; bỏ phần ứng dụng Firefox, trình cập nhật, trình
+   gửi báo lỗi…, đổi tên và icon thành Wings.
+2. **Rust**: chưa có thì tự cài (rustup, bản stable tối giản), cùng bộ công cụ C++ của Microsoft mà Rust cần
+   (Visual Studio Build Tools, qua winget).
+3. **Dựng** `app\unkcore.dll` (từ `core\`) và `Wings.exe` (từ `launcher\`).
+4. **Chép giao diện** `..\ui` vào `app\chrome\content\ui`.
+
+Xong thì mở `gecko\Wings.exe`. Tùy chọn: `-ToolsDir <thư mục>` (dùng / cài Rust ở đó thay vì
+`%USERPROFILE%\.rustup` và `.cargo`), `-Shortcut` (thêm lối tắt Wings vào menu Start), `-Force` (tải lại
+bộ máy), `-Locale en-US` (thông báo của lõi bằng ngôn ngữ khác). Chạy lại script sau mỗi lần cập nhật mã nguồn: bộ máy đã có thì giữ nguyên, chỉ dựng lại phần còn lại.
+
 ## Dựng lại
 
 ```

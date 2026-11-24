@@ -6,8 +6,10 @@ gecko/Wings.exe
 gecko/app/unkcore.dll
 # made by gecko/tools/sync-ui.mjs from ui/
 gecko/app/chrome/content/ui/
-# the Gecko engine (a Firefox build, renamed by gecko/tools/rebrand.ps1)
+# the Gecko engine (made by gecko/setup.ps1 from Mozilla's Firefox build) and setup's own temporary files
 gecko/engine/
+gecko/engine.new/
+gecko/.setup/
 # browsing data
 profile/
 gecko/profile/

@@ -8,7 +8,7 @@ import { S, $, emit, on } from './state.js';
 import { T, active, createTab, navigate, ensureLive } from './tabs.js';
 import { layout, forget } from './view.js';
 import { menu } from './menus.js';
-import { row as dlRow, rowClick as dlClick, allDownloads } from './downloads.js';
+import { row as dlRow, rowClick as dlClick, rowDragStart as dlDrag, allDownloads } from './downloads.js';
 
 const PANELS = [
   { id: 'bookmarks', icon: 'bookmark', title: 'Dấu trang' },
@@ -128,6 +128,7 @@ async function panel() {
     box.innerHTML = `<div class="panel-head">Tải xuống<span class="grow"></span><button class="icon-btn" data-act="open-downloads" title="Mở trang tải xuống">${icon('external', 15)}</button></div><input class="panel-search" type="search" placeholder="Tìm tệp đã tải"><div class="panel-list dl-list"></div>`;
     const list = box.querySelector('.panel-list');
     list.addEventListener('click', dlClick);
+    list.addEventListener('dragstart', dlDrag);
     const fill = async () => {
       const q = fold(box.querySelector('input').value);
       const items = (await allDownloads()).filter((d) => !q || fold(d.file).includes(q));

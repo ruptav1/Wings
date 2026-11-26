@@ -3,6 +3,7 @@
 // Tauri build's wv2.rs did with WebView2 is done here with Gecko: page events for the interface,
 // find in page, zoom, captures, printing, full screen, new windows opened by pages.
 import { Core } from "resource://unknowweb/Core.sys.mjs";
+import { PrivHistory } from "resource://unknowweb/PrivHistory.sys.mjs";
 
 const Wpl = Ci.nsIWebProgressListener;
 const lazy = {};
@@ -123,7 +124,21 @@ export class TabHost {
     if (remote && remoteType) b.setAttribute("remoteType", remoteType);
     if (openWindowInfo) b.openWindowInfo = openWindowInfo;
     b.className = "unk-view";
+    // links and files dropped on a page that does not take them (a page's upload box takes files
+    // itself): what Firefox's tabbrowser does with them
+    b.droppedLinkHandler = (event, links) => this.onDropLinks(b, links);
     return b;
+  }
+
+  // The first opens in this tab, any others in new tabs beside it (a file from File Explorer, a
+  // download dragged out of a list, a link from another program).
+  onDropLinks(browser, links) {
+    const t = this.byBrowser.get(browser);
+    if (!t) return;
+    const urls = (links || []).map((l) => String(l?.url || "").trim()).filter((u) => /^(https?|file):/i.test(u));
+    if (!urls.length) return;
+    this.load(t, urls[0]);
+    for (const url of urls.slice(1, 20)) this.B.emit("tab-open", { win: this.label, opener: t.id, url, background: true });
   }
 
   /** Its back / forward list now (null: nothing worth keeping). */
@@ -191,7 +206,7 @@ export class TabHost {
         try {
           Core.call("history_title", { url: t.url, title });
         } catch {}
-      }
+      } else if (this.private && title) PrivHistory.update({ url: t.url, title }); // (Settings → Ẩn danh, when on)
     };
     on("pagetitlechanged", title);
     on("DOMTitleChanged", title);
@@ -265,7 +280,7 @@ export class TabHost {
             try {
               Core.call("history_add", { url, title: t.browser.contentTitle || "" });
             } catch {}
-          }
+          } else if (ok && host.private) PrivHistory.add({ url, title: t.browser.contentTitle || "" }).catch(() => {}); // (its own, encrypted: PrivHistory.sys.mjs)
           // (asked for http://, shown over https://: HTTPS-First moved it)
           const host2 = (u) => u.replace(/^[a-z]+:\/\/(www\.)?/i, "").split(/[/?#:]/)[0];
           const upgraded = /^http:\/\//i.test(t.requested || "") && /^https:\/\//i.test(url) && host2(t.requested) === host2(url);
@@ -562,7 +577,7 @@ export class TabHost {
       try {
         Core.call("history_favicon", { url: t.url, favicon: url });
       } catch {}
-    }
+    } else if (this.private && /^https?:/i.test(url || "")) PrivHistory.update({ url: t.url, favicon: url });
   }
 
   onOpenLink(browser, d) {

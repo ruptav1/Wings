@@ -80,6 +80,43 @@
     startDragging: async () => {},
   };
 
+  // Files dragged and dropped: a finished download dragged out of a list (the file itself, as File
+  // Explorer gives one: a page's upload box takes it, a page or the tabs open it, a folder gets a
+  // copy), and where a file dropped from outside is (files dropped on the tabs open there).
+  const { FileUtils } = ChromeUtils.importESModule("resource://gre/modules/FileUtils.sys.mjs");
+  window.__unkDrag = {
+    setFile(dt, path) {
+      try {
+        const f = new FileUtils.File(String(path || ""));
+        if (!f.exists() || !f.isFile()) return false;
+        dt.mozSetDataAt("application/x-moz-file", f, 0);
+        const url = Services.io.newFileURI(f).spec;
+        dt.setData("text/uri-list", url);
+        dt.setData("text/x-moz-url", `${url}
+${f.leafName}`);
+        dt.effectAllowed = "copy";
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    pathOf(file) {
+      try {
+        return file?.mozFullPath || "";
+      } catch {
+        return "";
+      }
+    },
+    urlOf(path) {
+      try {
+        const f = new FileUtils.File(String(path || ""));
+        return f.exists() && f.isFile() ? Services.io.newFileURI(f).spec : "";
+      } catch {
+        return "";
+      }
+    },
+  };
+
   window.__TAURI__ = {
     gecko: true,
     core: { invoke },

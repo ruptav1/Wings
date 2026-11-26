@@ -513,6 +513,21 @@ function wireStrip(container, vertical) {
     else newTabMenu(e.clientX, e.clientY);
   });
 
+  // files dropped on the tabs (from File Explorer, or a download dragged out of Tải xuống gần đây)
+  // and links: each in a new tab
+  container.addEventListener('dragover', (e) => {
+    const types = [...(e.dataTransfer?.types || [])];
+    if (types.includes('Files') || types.includes('text/uri-list') || types.includes('text/x-moz-url')) e.preventDefault();
+  });
+  container.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    let urls = [...(dt.files || [])].map((f) => window.__unkDrag?.urlOf(window.__unkDrag.pathOf(f))).filter(Boolean);
+    if (!urls.length) urls = (dt.getData('text/uri-list') || '').split(/\r?\n/).map((s) => s.trim()).filter((s) => /^(https?|file):/i.test(s));
+    if (!urls.length) return;
+    e.preventDefault();
+    urls.slice(0, 20).forEach((url, i) => createTab({ url, background: i > 0 }));
+  });
+
   // pick and drag to reorder; dragged well out of the strip: into a window of its own
   container.addEventListener('pointerdown', (e) => {
     const el = e.target.closest('.tab');

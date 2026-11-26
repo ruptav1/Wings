@@ -172,3 +172,16 @@ input[type=color] { width: 40px; height: 30px; padding: 0 2px; border: 1px solid
 
 /* Wings' own wallpaper among the user's: marked, not deletable */
 .wp-item .wp-builtin { position: absolute; top: 6px; right: 6px; padding: 2px 8px; border-radius: 99px; background: rgba(0, 0, 0, .55); color: #fff; font-size: 11px; font-weight: 600; pointer-events: none; }
+
+/* Ẩn danh: the PIN made, changed or removed, in a form under its row */
+.pin-form { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px 18px 16px; border-top: 1px solid var(--line); background: var(--hover); }
+.pin-form[hidden] { display: none; }
+.pin-fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.pin-field { display: flex; flex-direction: column; gap: 4px; color: var(--text-3); font-size: 12.5px; }
+.pin-input { width: 150px; font-size: 17px; letter-spacing: 0.4em; text-align: center; }
+.pin-err { color: #d64545; }
+.pin-err:empty { display: none; }
+.pin-actions, .pin-ctl { display: flex; gap: 8px; }
+.pin-done { display: block; margin: -6px 4px 10px; color: var(--accent-strong, var(--accent)); font-weight: 600; }
+.pin-done:empty { display: none; }
+.pin-note { margin: 0 4px; font-size: 12.5px; }

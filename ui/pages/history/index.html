@@ -9,6 +9,7 @@
       #mode { display: inline-flex; gap: 2px; padding: 3px; margin-bottom: 14px; border-radius: 10px; background: var(--surface-solid); border: 1px solid var(--line); }
       #mode button { border: 0; background: none; color: var(--text-2); font: inherit; padding: 6px 14px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
       #mode button.on { background: var(--accent-soft); color: var(--accent-strong, var(--accent)); font-weight: 600; }
+      [hidden] { display: none !important; }
       .group-row { cursor: pointer; }
       .group-icons { display: flex; gap: 2px; flex: none; }
       .group-icons .fav { width: 16px; height: 16px; }
@@ -19,6 +20,39 @@
       .scan-row.lv-bad .scan-ico, .scan-row.lv-bad .sub { color: #d64545; }
       .scan-row.lv-warn .scan-ico, .scan-row.lv-warn .sub { color: #b7860b; }
       .list-row .acts .btn { display: inline-flex; align-items: center; gap: 4px; }
+      /* Trang đã xem and Ẩn danh: a time span, by time or per site, an order, one site, how many */
+      .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -4px 0 14px; }
+      .tools select, .tools input[type='date'] { height: 32px; }
+      .tools .dash { color: var(--text-3); }
+      .vseg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 9px; background: var(--surface-solid); border: 1px solid var(--line); }
+      .vseg button { border: 0; background: none; color: var(--text-2); font: inherit; padding: 4px 12px; border-radius: 7px; cursor: pointer; }
+      .vseg button.on { background: var(--accent-soft); color: var(--accent-strong, var(--accent)); font-weight: 600; }
+      .site-chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 4px 0 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-strong, var(--accent)); font-weight: 600; }
+      .site-chip .icon-btn { width: 22px; height: 22px; }
+      .grow { flex: 1; }
+      .count { color: var(--text-3); font-size: 12.5px; }
+      .visits { margin-left: 8px; padding: 1px 7px; border-radius: 99px; background: var(--hover); color: var(--text-2); font-size: 11.5px; font-weight: 600; }
+      .list-row .time.dated { width: 64px; }
+      .list-row { cursor: pointer; }
+      /* Theo trang web: a site's row, opened: a search in that site and its pages */
+      .site-row .chev { display: grid; flex: none; place-items: center; width: 16px; color: var(--text-3); transition: transform 0.15s; }
+      .site-row.open .chev { transform: rotate(90deg); }
+      .site-count { flex: none; min-width: 36px; color: var(--text-2); font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+      .site-inside { display: flex; flex-direction: column; gap: 2px; margin: 2px 6px 10px 34px; padding-left: 12px; border-left: 2px solid var(--line); }
+      .site-inside .site-q { max-width: 340px; margin: 4px 0; }
+      .site-inside > .btn { align-self: flex-start; margin-top: 4px; }
+      .icon-btn.armed { color: #d64545; background: rgba(214, 69, 69, 0.13); }
+      .more-note { margin: 10px 4px; color: var(--text-3); font-size: 12.5px; text-align: center; }
+      /* Ẩn danh, locked: the PIN asked for */
+      body.locked #q, body.locked .tools, body.locked #del { display: none !important; }
+      .lock-box { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 56px 20px; text-align: center; }
+      .lock-ico { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-strong, var(--accent)); }
+      .lock-box b { font-size: 16px; }
+      .lock-box small { color: var(--text-3); max-width: 460px; }
+      .lock-box .pin { width: 200px; height: 46px; font-size: 22px; letter-spacing: 0.5em; text-align: center; }
+      .lock-err { min-height: 1.3em; color: #d64545; }
+      .lock-box.shake .pin { animation: shake 0.35s; }
+      @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
     </style>
     <script type="module" src="history.js"></script>
   </head>
@@ -27,16 +61,37 @@
       <div class="page-head">
         <h1>Lịch sử</h1>
         <input id="q" type="search" placeholder="Tìm trong lịch sử" />
+        <button id="lock" class="btn" hidden>Khóa</button>
+        <button id="del" class="btn danger">Xóa lịch sử</button>
         <button id="clear" class="btn">Xóa dữ liệu duyệt web…</button>
         <button id="clear-list" class="btn" hidden>Xóa danh sách</button>
       </div>
       <div id="mode">
-        <button data-mode="pages" >Trang đã xem</button>
-        <button data-mode="groups" >Cửa sổ đã đóng</button>
-        <button data-mode="scans" >Đã quét</button>
+        <button data-mode="pages">Trang đã xem</button>
+        <button data-mode="groups">Cửa sổ đã đóng</button>
+        <button data-mode="scans">Đã quét</button>
+        <button data-mode="private" hidden>Ẩn danh</button>
+      </div>
+      <div class="tools" id="tools">
+        <select id="span" title="Khoảng thời gian">
+          <option value="all">Mọi lúc</option>
+          <option value="hour">1 giờ qua</option>
+          <option value="today">Hôm nay</option>
+          <option value="yesterday">Hôm qua</option>
+          <option value="week">7 ngày qua</option>
+          <option value="month">30 ngày qua</option>
+          <option value="thismonth">Tháng này</option>
+          <option value="custom">Chọn ngày…</option>
+        </select>
+        <span id="custom" hidden><input type="date" id="from" title="Từ ngày" /> <span class="dash">–</span> <input type="date" id="to" title="Đến ngày" /></span>
+        <div class="vseg" id="view"><button data-view="time">Theo thời gian</button><button data-view="sites">Theo trang web</button></div>
+        <select id="sort" title="Sắp xếp"></select>
+        <span id="site-chip" class="site-chip" hidden></span>
+        <span class="grow"></span>
+        <span id="count" class="count"></span>
       </div>
       <div id="list"></div>
-      <div id="more" class="empty" hidden><button class="btn">Xem thêm</button></div>
+      <div id="more" class="more-note"></div>
     </div>
   </body>
 </html>

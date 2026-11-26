@@ -173,6 +173,7 @@
     "stripParams": true,
     "debounce": true,
     "clearOnExit": false,
+    "privateHistory": false,
     "diskCacheMB": 200,
     "warp": false
   },

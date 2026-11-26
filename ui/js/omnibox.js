@@ -169,18 +169,31 @@ async function query(q, autofill) {
   const n = ++lastQuery;
   const text = q.trim();
   if (!text) return hide();
-  const f = fold(text);
+  // (open tabs and bookmarks match as the history does: every word typed, in any order, with or
+  // without marks, in the title or the address)
+  const words = text.split(/\s+/).map(fold);
+  const decoded = (u) => {
+    try {
+      return decodeURI(u);
+    } catch {
+      return u;
+    }
+  };
+  const matches = (title, url) => {
+    const s = fold(`${title || ''} ${decoded(url || '')}`);
+    return words.every((w) => s.includes(w));
+  };
   const first = toUrl(text, S.settings, S.engines);
   const isSearch = first.startsWith(searchUrl('', S.settings, S.engines).replace(/%s|$/, '')) && !/^https?:\/\/[^/]+\.[^/]+/.test(text);
   const out = [{ kind: isSearch ? 'search' : 'url', title: text, url: first, first: true }];
   // open tabs
   for (const t of T.list) {
-    if (t.id !== T.activeId && (fold(t.title).includes(f) || t.url.toLowerCase().includes(f))) out.push({ kind: 'tab', title: t.title, url: t.url, id: t.id });
+    if (t.id !== T.activeId && matches(t.title, t.url)) out.push({ kind: 'tab', title: t.title, url: t.url, id: t.id });
     if (out.length > 3) break;
   }
   // bookmarks
   for (const b of S.bookmarks.items) {
-    if (fold(b.title).includes(f) || b.url.toLowerCase().includes(f)) out.push({ kind: 'bookmark', title: b.title, url: b.url });
+    if (matches(b.title, b.url)) out.push({ kind: 'bookmark', title: b.title, url: b.url });
     if (out.filter((o) => o.kind === 'bookmark').length >= 3) break;
   }
   items = out;
@@ -204,6 +217,9 @@ async function query(q, autofill) {
         input.value = text + fill.slice(text.length);
         input.setSelectionRange(text.length, input.value.length);
         items[0] = { kind: 'url', title: fill, url: hist[0].url.match(/^https?:\/\/(www\.)?[^/]+/)[0] + '/', first: true };
+        // (the page filled in is not listed a second time below it)
+        const bareOf = (u) => u.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '').toLowerCase();
+        items = items.filter((it, i) => i === 0 || bareOf(it.url || '') !== bareOf(items[0].url));
       }
     }
   }

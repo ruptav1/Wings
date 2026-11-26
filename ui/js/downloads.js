@@ -54,7 +54,9 @@ export function row(d) {
     : d.state === 'progressing' ? `<button class="icon-btn" data-a="pause" title="Tạm dừng">${icon('pause', 15)}</button><button class="icon-btn" data-a="cancel" title="Hủy">${icon('x', 15)}</button>`
     : d.state === 'paused' ? `<button class="icon-btn" data-a="resume" title="Tiếp tục">${icon('play', 15)}</button><button class="icon-btn" data-a="cancel" title="Hủy">${icon('x', 15)}</button>`
     : `<button class="icon-btn act" data-a="retry" title="Tải lại">${icon('reload', 15)}</button>`;
-  return `<div class="row" data-id="${d.id}">${icon(d.state === 'completed' ? 'check' : 'download', 18)}<div class="col"><span class="t" title="${esc(d.path)}">${esc(d.file)}</span><span class="sub">${status}</span>${scanBadge(d)}${d.state === 'progressing' || d.state === 'paused' ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}</div>${acts}</div>`;
+  // (a finished one can be dragged out: into a page, onto the tabs, into a folder: bridge.js __unkDrag)
+  const drag = d.state === 'completed' && d.unit !== 'pages' && !!window.__unkDrag;
+  return `<div class="row" data-id="${d.id}"${drag ? ` draggable="true" title="${esc(t('Kéo vào trang web, thanh tab hoặc thư mục'))}"` : ''}>${icon(d.state === 'completed' ? 'check' : 'download', 18)}<div class="col"><span class="t" title="${esc(d.path)}">${esc(d.file)}</span><span class="sub">${status}</span>${scanBadge(d)}${d.state === 'progressing' || d.state === 'paused' ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}</div>${acts}</div>`;
 }
 
 function drawPop() {
@@ -81,6 +83,15 @@ export function rowClick(e) {
   else if (d.state === 'completed') invoke('file_open', { path: d.path }).catch((err) => toast(String(err), { iconName: 'warn' }));
 }
 
+/** A finished download dragged out of a list of rows: the file itself, as File Explorer gives one. */
+export function rowDragStart(e) {
+  const r = e.target.closest('.row[draggable="true"]');
+  const d = r && D.get(isNaN(+r.dataset.id) ? r.dataset.id : +r.dataset.id);
+  if (!d || !window.__unkDrag?.setFile(e.dataTransfer, d.path)) return e.preventDefault();
+  // (the popover goes once the drag is under way: its backdrop over the page would take the drop)
+  setTimeout(() => popClose?.(), 0);
+}
+
 /** Every download known: this run's and the kept list, newest first. */
 export async function allDownloads() {
   for (const d of await invoke('downloads_list')) if (![...D.values()].some((x) => x.path === d.path && x.started === d.started)) D.set(d.id + '-old', { ...d, id: d.id + '-old' });
@@ -100,6 +111,7 @@ export async function downloadsPopover(anchor) {
     popList
   );
   popList.addEventListener('click', rowClick);
+  popList.addEventListener('dragstart', rowDragStart);
   drawPop();
   popClose = popover(el, anchor, { class: 'dl-pop', onClose: () => ((popClose = null), (popList = null)) });
 }

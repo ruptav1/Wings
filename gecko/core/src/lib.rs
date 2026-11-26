@@ -156,6 +156,30 @@ fn dispatch(cmd: &str, a: Args, bytes: Vec<u8>) -> R<Value> {
         }
         "history_query" => ok(st.store.history.lock().unwrap().query(&a.s("text"), a.u64("before"), a.u64("limit").unwrap_or(200) as usize)),
         "history_suggest" => ok(st.store.history.lock().unwrap().suggest(&a.s("text"), 8)),
+        // Lịch sử's list: the words typed (with or without marks), a site, a time span, an order; per
+        // site; and all those matching deleted (store.rs)
+        "history_find" => ok(st.store.history.lock().unwrap().find(&a.0)),
+        "history_domains" => ok(st.store.history.lock().unwrap().domains(&a.0)),
+        "history_remove_where" => {
+            let n = st.store.history.lock().unwrap().remove_where(&a.0);
+            if n > 0 {
+                let _ = app.emit("history-changed", json!({}));
+            }
+            ok(n)
+        }
+        "history_remove_ids" => {
+            let ids: Vec<String> = a.v("ids").as_array().map(|l| l.iter().filter_map(|x| x.as_str().map(str::to_string)).collect()).unwrap_or_default();
+            ok(st.store.history.lock().unwrap().remove_ids(&ids))
+        }
+        // Windows' keys for this account (DPAPI), for the first line of Ẩn danh's history
+        // (PrivHistory.sys.mjs; not callable from the pages: Backend.sys.mjs keeps them back)
+        "dpapi_protect" | "dpapi_unprotect" => {
+            use base64::Engine as _;
+            let b64 = base64::engine::general_purpose::STANDARD;
+            let data = b64.decode(a.s("data")).map_err(|e| e.to_string())?;
+            let out = if cmd == "dpapi_protect" { secret::protect(&data) } else { secret::unprotect(&data) };
+            out.map(|b| json!(b64.encode(b))).ok_or_else(|| "dpapi".to_string())
+        }
         "history_delete" => {
             st.store.history.lock().unwrap().delete_url(&a.s("url"));
             ok(())

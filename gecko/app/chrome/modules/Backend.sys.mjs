@@ -9,6 +9,7 @@ import { TabHost, toReal, toDisplay, isInternal } from "resource://unknowweb/Tab
 import { answerPrompt } from "resource://unknowweb/actors/PromptParent.sys.mjs";
 import * as Extras from "resource://unknowweb/Extras.sys.mjs";
 import { initManga, scanManga, thumbsManga, startManga, cancelManga, isMangaId } from "resource://unknowweb/Manga.sys.mjs";
+import { PrivHistory } from "resource://unknowweb/PrivHistory.sys.mjs";
 
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
@@ -119,6 +120,7 @@ function hostOfTab(id, ctx) {
 // ---------- the engine, set from the settings ----------
 function applyPrefs(s) {
   if (!s) return;
+  PrivHistory.setRecording(!!s.privacy?.privateHistory); // (Settings → Ẩn danh: InPrivate windows' pages kept, encrypted)
   const p = s.privacy || {};
   const g = s.general || {};
   const a = s.appearance || {};
@@ -858,7 +860,24 @@ function cookieHeader(url) {
 }
 
 // ---------- the commands ----------
-const QUICK = new Set(["settings_get", "settings_set", "settings_reset", "engines_get", "bookmarks_get", "bookmarks_set", "history_suggest", "history_delete", "history_query", "notes_get", "notes_set", "downloads_list", "downloads_clear", "perm_set", "adblock_status", "wallpaper_list", "wallpaper_meta", "wallpaper_delete", "grab_tools", "store_cancel", "backup_export", "history_delete_range", "media_cancel", "process_kill"]);
+// (a page by its inner window: Lịch sử → Ẩn danh opened in it stays open for it only)
+const pageId = (win) => {
+  try {
+    return win?.windowGlobalChild?.innerWindowId ?? win?.windowUtils?.currentInnerWindowID ?? 0;
+  } catch {
+    return 0;
+  }
+};
+// (...and only that page of the browser's: Lịch sử, or Cài đặt)
+function fromPage(win, name) {
+  let uri = "";
+  try {
+    uri = win?.document?.documentURI || "";
+  } catch {}
+  if (!uri.startsWith("chrome://unknowweb/content/ui/pages/" + name + "/")) throw "not allowed";
+  return pageId(win);
+}
+const QUICK = new Set(["settings_get", "settings_set", "settings_reset", "engines_get", "bookmarks_get", "bookmarks_set", "history_suggest", "history_delete", "history_query", "history_find", "history_domains", "history_remove_where", "history_remove_ids", "notes_get", "notes_set", "downloads_list", "downloads_clear", "perm_set", "adblock_status", "wallpaper_list", "wallpaper_meta", "wallpaper_delete", "grab_tools", "store_cancel", "backup_export", "history_delete_range", "media_cancel", "process_kill"]);
 
 async function invoke(cmd, args, options, caller) {
   args = args || {};
@@ -986,6 +1005,31 @@ async function invoke(cmd, args, options, caller) {
       const r = b?.getBoundingClientRect?.();
       return { x: r?.left || 0, y: r?.top || 0, w: w.innerWidth, h: w.innerHeight };
     }
+    // ----- Lịch sử → Ẩn danh and Settings → Ẩn danh: InPrivate windows' pages, kept encrypted when
+    // switched on (PrivHistory.sys.mjs); read only by the Lịch sử page that opened it with the PIN
+    case "privhist_status":
+      return PrivHistory.status(pageId(caller));
+    case "privhist_unlock":
+      return PrivHistory.unlock(fromPage(caller, "history"), caller, args.pin ?? null);
+    case "privhist_lock":
+      return PrivHistory.lock(pageId(caller));
+    case "privhist_find":
+      return PrivHistory.find(fromPage(caller, "history"), args);
+    case "privhist_domains":
+      return PrivHistory.domains(fromPage(caller, "history"), args);
+    case "privhist_remove":
+      return PrivHistory.remove(fromPage(caller, "history"), Array.isArray(args.ids) ? args.ids : []);
+    case "privhist_remove_where":
+      return PrivHistory.removeWhere(fromPage(caller, "history"), args);
+    case "privhist_check":
+      fromPage(caller, "settings");
+      return PrivHistory.check(args.pin);
+    case "privhist_set_pin":
+      fromPage(caller, "settings");
+      return PrivHistory.setPin(args.current ?? null, args.pin ?? null);
+    case "privhist_reset":
+      fromPage(caller, "settings");
+      return PrivHistory.reset();
     case "open_tab": {
       const target = ctx.label ? ctx.label : anyShell()?.host?.label;
       if (!target) openWindow({ url: args.url });
@@ -1208,6 +1252,8 @@ async function invoke(cmd, args, options, caller) {
       return Core.submit(cmd, { __headers: headers }, args);
     }
   }
+  // (Windows' keys are for PrivHistory.sys.mjs only, not for the pages)
+  if (cmd.startsWith("dpapi_")) throw "not allowed";
   if (QUICK.has(cmd)) return Core.call(cmd, args);
   return Core.submit(cmd, args);
 }
@@ -1412,6 +1458,7 @@ function start() {
   Services.obs.addObserver(gumObserver, "getUserMedia:request");
   registerPermissionPrompt();
   applyPrefs(settings);
+  PrivHistory.onChange = () => emit("privhist-changed", {}); // (Lịch sử → Ẩn danh, open, lists it again)
 
   lazy.Downloads.getList(lazy.Downloads.ALL)
     .then((list) => list.addView(dlView))

@@ -32,7 +32,9 @@ function draw() {
           : d.state === 'progressing' ? `<button class="icon-btn" data-a="pause" title="Tạm dừng">${icon('pause', 16)}</button><button class="icon-btn" data-a="cancel" title="Hủy">${icon('x', 16)}</button>`
           : d.state === 'paused' ? `<button class="icon-btn" data-a="resume" title="Tiếp tục">${icon('play', 16)}</button><button class="icon-btn" data-a="cancel" title="Hủy">${icon('x', 16)}</button>`
           : `<button class="btn" data-a="retry">Tải lại</button>`;
-        return `<div class="list-row" data-id="${esc(String(d.id))}">${icon(d.state === 'completed' ? 'check' : 'download', 20)}<div class="col"><span class="t">${esc(d.file)}</span><span class="sub">${esc(hostOf(d.url))} · ${status}</span>${scanBadge(d)}${going ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}</div><div class="acts">${acts}<button class="icon-btn" data-a="remove" title="Xóa khỏi danh sách">${icon('trash', 16)}</button></div></div>`;
+        // (a finished one can be dragged out: into a page, onto the tabs, into a folder: bridge.js __unkDrag)
+        const drag = d.state === 'completed' && d.unit !== 'pages' && !!window.__unkDrag;
+        return `<div class="list-row" data-id="${esc(String(d.id))}"${drag ? ' draggable="true"' : ''}>${icon(d.state === 'completed' ? 'check' : 'download', 20)}<div class="col"><span class="t">${esc(d.file)}</span><span class="sub">${esc(hostOf(d.url))} · ${status}</span>${scanBadge(d)}${going ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}</div><div class="acts">${acts}<button class="icon-btn" data-a="remove" title="Xóa khỏi danh sách">${icon('trash', 16)}</button></div></div>`;
       })
       .join('') || '<div class="empty">Chưa có tệp nào được tải xuống</div>';
 }
@@ -51,6 +53,11 @@ async function main() {
     await invoke('downloads_clear', {});
     for (const [k, d] of D) if (d.state !== 'progressing' && d.state !== 'paused') D.delete(k);
     draw();
+  });
+  $('#list').addEventListener('dragstart', (e) => {
+    const row = e.target.closest('.list-row[draggable="true"]');
+    const d = row && D.get(row.dataset.id);
+    if (!d || !window.__unkDrag?.setFile(e.dataTransfer, d.path)) e.preventDefault();
   });
   $('#list').addEventListener('click', async (e) => {
     const sc = e.target.closest('[data-scan]');

@@ -19,6 +19,7 @@ const SECTIONS = [
   { id: 'newtab', icon: 'apps', title: 'Trang Tab mới' },
   { id: 'extensions', icon: 'puzzle', title: 'Tiện ích mở rộng' },
   { id: 'privacy', icon: 'shield', title: 'Quyền riêng tư' },
+  { id: 'incognito', icon: 'incognito', title: 'Ẩn danh' },
   { id: 'performance', icon: 'sleep', title: 'Hiệu năng' },
   { id: 'shortcuts', icon: 'keyboard', title: 'Phím tắt' },
   { id: 'about', icon: 'info', title: 'Giới thiệu' },
@@ -819,6 +820,141 @@ function cleanerRows() {
   draw();
   return [h('div', { class: 'opt col' }, box)];
 }
+
+// ---------- Ẩn danh: InPrivate windows' history (PrivHistory.sys.mjs): off until switched on, kept
+// encrypted, looked at in Lịch sử → Ẩn danh. Its PIN (4 or 6 digits) is asked for there only; made
+// here, and changed or removed only with the one set. Forgotten: the history goes with it.
+function pinInput(len, onFull) {
+  const el = h('input', { type: 'password', class: 'pin-input', inputmode: 'numeric', autocomplete: 'off', maxlength: len, placeholder: '•'.repeat(len), 'aria-label': t('Mật khẩu') });
+  el.addEventListener('input', () => {
+    const n = Number(el.maxLength) || len;
+    el.value = el.value.replace(/\D/g, '').slice(0, n);
+    if (el.value.length === n) onFull?.(el.value);
+  });
+  return el;
+}
+const pinWait = (r) => (r.wait > 0 ? t('Sai quá nhiều lần. Thử lại sau {0} giây', Math.ceil(r.wait / 1000)) : r.left ? t('Sai mật khẩu, còn {0} lần thử', r.left) : t('Sai mật khẩu'));
+
+R.incognito = async () => {
+  const st = await invoke('privhist_status').catch(() => null);
+  const form = h('div', { class: 'pin-form', hidden: true });
+  const close = () => {
+    form.hidden = true;
+    form.replaceChildren();
+  };
+  // (done: the section drawn again, with what was done under it)
+  const done = (msg) => {
+    close();
+    render().then(() => {
+      const n = $('.pin-done');
+      if (n) n.textContent = msg;
+    });
+  };
+  // one step of the form: what it asks, its fields, a message line, its buttons
+  const step = (title, fields, buttons = []) => {
+    const err = h('span', { class: 'pin-err' });
+    form.replaceChildren(h('b', { text: title }), h('div', { class: 'pin-fields' }, ...fields), err, h('div', { class: 'pin-actions' }, ...buttons, h('button', { class: 'btn', text: t('Hủy'), onclick: close })));
+    form.hidden = false;
+    form.querySelector('input')?.focus();
+    return err;
+  };
+  // the new PIN: 4 or 6 digits, typed twice
+  const askNew = (current) => {
+    let len = st?.pin || 4;
+    let err;
+    const a = pinInput(len, () => b.focus());
+    const b = pinInput(len);
+    const lens = h('div', { class: 'seg' });
+    for (const n of [4, 6]) {
+      lens.append(
+        h('button', {
+          text: t('{0} chữ số', n),
+          class: n === len ? 'on' : '',
+          onclick: (e) => {
+            len = n;
+            for (const x of [a, b]) Object.assign(x, { maxLength: n, placeholder: '•'.repeat(n), value: '' });
+            lens.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === e.currentTarget));
+            a.focus();
+          },
+        })
+      );
+    }
+    const save = h('button', { class: 'btn primary', text: t('Lưu mật khẩu') });
+    save.onclick = async () => {
+      if (a.value.length !== len) return (err.textContent = t('Mật khẩu cần đủ {0} chữ số', len));
+      if (a.value !== b.value) return (err.textContent = t('Hai lần nhập không khớp'));
+      save.disabled = true;
+      const r = await invoke('privhist_set_pin', { current, pin: a.value }).catch(() => ({ ok: false }));
+      save.disabled = false;
+      if (!r.ok) return (err.textContent = r.wait || r.left !== undefined ? pinWait(r) : t('Không lưu được mật khẩu'));
+      done(current ? t('Đã đổi mật khẩu ✿') : t('Đã đặt mật khẩu ✿'));
+    };
+    b.addEventListener('keydown', (e) => e.key === 'Enter' && save.click());
+    err = step(current ? t('Mật khẩu mới') : t('Tạo mật khẩu'), [lens, h('label', { class: 'pin-field' }, h('span', { text: t('Mật khẩu') }), a), h('label', { class: 'pin-field' }, h('span', { text: t('Nhập lại') }), b)], [save]);
+  };
+  // the PIN set, before it is changed or removed
+  const askCurrent = (then) => {
+    let err;
+    const input = pinInput(st.pin, async (pin) => {
+      input.disabled = true;
+      const r = await invoke('privhist_check', { pin }).catch(() => ({ ok: false }));
+      input.disabled = false;
+      input.value = '';
+      if (!r.ok) {
+        err.textContent = pinWait(r);
+        return input.focus();
+      }
+      then(pin);
+    });
+    err = step(t('Nhập mật khẩu hiện tại'), [input]);
+  };
+  let pinDesc = '';
+  const pinCtl = h('div', { class: 'pin-ctl' });
+  if (st?.broken) pinDesc = t('Tệp lịch sử ẩn danh không mở được trên máy tính hoặc tài khoản Windows này');
+  else if (st) {
+    pinDesc = st.pin ? t('Mã {0} số, hỏi khi xem Lịch sử → Ẩn danh', st.pin) : t('Chưa đặt: ai mở Lịch sử → Ẩn danh cũng xem được');
+    if (!st.pin) pinCtl.append(h('button', { class: 'btn', html: `${icon('lock', 14)} ${esc(t('Tạo mật khẩu'))}`, onclick: () => askNew(null) }));
+    else
+      pinCtl.append(
+        h('button', { class: 'btn', text: t('Đổi mật khẩu'), onclick: () => askCurrent((pin) => askNew(pin)) }),
+        h('button', {
+          class: 'btn',
+          text: t('Bỏ mật khẩu'),
+          onclick: () =>
+            askCurrent(async (pin) => {
+              const r = await invoke('privhist_set_pin', { current: pin, pin: null }).catch(() => ({ ok: false }));
+              done(r.ok ? t('Đã bỏ mật khẩu') : t('Không bỏ được mật khẩu'));
+            }),
+        })
+      );
+  }
+  const reset = h('button', { class: 'btn danger', text: t('Xóa') });
+  reset.onclick = async () => {
+    if (!reset.dataset.armed) {
+      reset.dataset.armed = '1';
+      reset.textContent = t('Bấm lần nữa để xác nhận');
+      setTimeout(() => {
+        delete reset.dataset.armed;
+        reset.textContent = t('Xóa');
+      }, 3000);
+      return;
+    }
+    await invoke('privhist_reset');
+    done(t('Đã xóa lịch sử ẩn danh'));
+  };
+  return [
+    group(
+      'Lịch sử ẩn danh',
+      toggle('privacy.privateHistory', 'Lưu lịch sử cửa sổ InPrivate', 'Các trang mở trong cửa sổ InPrivate được ghi vào một tệp mã hóa riêng, chỉ xem được trong Lịch sử → Ẩn danh.'),
+      opt(t('Mật khẩu xem lịch sử ẩn danh'), pinDesc, pinCtl),
+      form,
+      opt('Xem lịch sử ẩn danh', null, h('button', { class: 'btn', text: t('Mở'), onclick: () => invoke('open_tab', { url: 'unk://history/#private' }) })),
+      opt('Xóa lịch sử ẩn danh và mật khẩu', 'Dùng khi quên mật khẩu: lịch sử ẩn danh mất hẳn, không lấy lại được.', reset)
+    ),
+    h('span', { class: 'pin-done' }),
+    h('p', { class: 'muted pin-note', text: 'Tệp lịch sử ẩn danh được mã hóa bằng khóa của Windows cho tài khoản này và bằng mật khẩu của bạn: chép sang máy khác hay mở bằng chương trình khác đều không đọc được. Nhập sai 5 lần thì phải đợi rồi mới thử lại được.' }),
+  ];
+};
 
 R.privacy = async () => {
   const status = await invoke('adblock_status');

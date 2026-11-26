@@ -497,10 +497,11 @@ pub struct Suggestion {
     pub last: u64,
 }
 
-fn fold(s: &str) -> String {
-    // lowercase, Vietnamese marks off (so "tieng viet" finds "Tiếng Việt")
+pub(crate) fn fold(s: &str) -> String {
+    // lowercase, Vietnamese marks off (so "tieng viet" finds "Tiếng Việt"), marks written apart too
     s.to_lowercase()
         .chars()
+        .filter(|c| !('\u{300}'..='\u{36f}').contains(c))
         .map(|c| match c {
             'à' | 'á' | 'ả' | 'ã' | 'ạ' | 'ă' | 'ằ' | 'ắ' | 'ẳ' | 'ẵ' | 'ặ' | 'â' | 'ầ' | 'ấ' | 'ẩ' | 'ẫ' | 'ậ' => 'a',
             'è' | 'é' | 'ẻ' | 'ẽ' | 'ẹ' | 'ê' | 'ề' | 'ế' | 'ể' | 'ễ' | 'ệ' => 'e',
@@ -512,6 +513,221 @@ fn fold(s: &str) -> String {
             c => c,
         })
         .collect()
+}
+
+// ---------- Lịch sử's list (main/histquery.js in TyranWeb; Ẩn danh's is the same, in PrivHistory.sys.mjs) ----------
+// The words typed, in any order, with or without marks, in the title or the address ("site:x.com"
+// among them keeps that site and its subdomains, only it with exact); a time span; one page.
+
+/// The site of an address, without "www.".
+pub(crate) fn host_of(url: &str) -> String {
+    let Some(i) = url.find("://") else { return String::new() };
+    let rest = url[i + 3..].split(['/', '?', '#']).next().unwrap_or("");
+    let rest = rest.rsplit('@').next().unwrap_or(rest);
+    let host = rest.split(':').next().unwrap_or("").to_lowercase();
+    host.strip_prefix("www.").map(str::to_string).unwrap_or(host)
+}
+
+fn clean_host(s: &str) -> String {
+    let s = s.trim().to_lowercase();
+    let s = match s.find("://") {
+        Some(i) => s[i + 3..].to_string(),
+        None => s,
+    };
+    let s = s.strip_prefix("www.").map(str::to_string).unwrap_or(s);
+    s.split(['/', ':', '?', '#']).next().unwrap_or("").to_string()
+}
+
+/// An address with its %-escapes read (a search for "bún" finds "?q=b%C3%BAn").
+fn decoded(url: &str) -> String {
+    if !url.contains('%') {
+        return url.to_string();
+    }
+    let hex = |b: u8| match b {
+        b'0'..=b'9' => Some(b - b'0'),
+        b'a'..=b'f' => Some(b - b'a' + 10),
+        b'A'..=b'F' => Some(b - b'A' + 10),
+        _ => None,
+    };
+    let b = url.as_bytes();
+    let mut out = Vec::with_capacity(b.len());
+    let mut i = 0;
+    while i < b.len() {
+        if b[i] == b'%' && i + 2 < b.len() {
+            if let (Some(h), Some(l)) = (hex(b[i + 1]), hex(b[i + 2])) {
+                out.push(h * 16 + l);
+                i += 3;
+                continue;
+            }
+        }
+        out.push(b[i]);
+        i += 1;
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
+fn hay(v: &Visit) -> String {
+    fold(&format!("{} {}", v.title, decoded(&v.url)))
+}
+
+pub struct Filter {
+    words: Vec<String>,
+    site: String,
+    exact: bool,
+    since: u64,
+    until: u64,
+    url: String,
+}
+
+impl Filter {
+    pub fn from(f: &Value) -> Filter {
+        let mut words = vec![];
+        let mut site = clean_host(f["host"].as_str().unwrap_or(""));
+        for w in f["text"].as_str().unwrap_or("").split_whitespace() {
+            match w.strip_prefix("site:").or_else(|| w.strip_prefix("SITE:")) {
+                Some(s) if !s.is_empty() => site = clean_host(s),
+                _ => words.push(fold(w)),
+            }
+        }
+        Filter { words, site, exact: f["exact"].as_bool().unwrap_or(false), since: f["since"].as_u64().unwrap_or(0), until: f["until"].as_u64().unwrap_or(0), url: f["url"].as_str().unwrap_or("").to_string() }
+    }
+    pub fn ok(&self, v: &Visit) -> bool {
+        if self.since > 0 && v.ts < self.since || self.until > 0 && v.ts >= self.until {
+            return false;
+        }
+        if !self.url.is_empty() && v.url != self.url {
+            return false;
+        }
+        if !self.site.is_empty() {
+            let h = host_of(&v.url);
+            if h != self.site && (self.exact || !h.ends_with(&format!(".{}", self.site))) {
+                return false;
+            }
+        }
+        if !self.words.is_empty() {
+            let s = hay(v);
+            if !self.words.iter().all(|w| s.contains(w.as_str())) {
+                return false;
+            }
+        }
+        true
+    }
+}
+
+fn name_key(v: &Visit) -> String {
+    let t = if v.title.is_empty() { &v.url } else { &v.title };
+    fold(t).trim_start_matches(|c: char| !c.is_alphanumeric()).to_string()
+}
+
+/// { rows, total, count }: the visits matching (newest or oldest first, by name, or each page once
+/// with how many times it was opened, the most first); total: how many match (what deleting them
+/// takes away); count: the rows there are to page through.
+pub fn find_in(visits: &[Visit], f: &Value) -> Value {
+    let flt = Filter::from(f);
+    let sort = f["sort"].as_str().unwrap_or("new");
+    let limit = f["limit"].as_u64().unwrap_or(120).clamp(1, 2000) as usize;
+    let offset = f["offset"].as_u64().unwrap_or(0) as usize;
+    if sort == "new" || sort == "old" {
+        let mut rows = vec![];
+        let mut total = 0usize;
+        let order: Box<dyn Iterator<Item = &Visit>> = if sort == "new" { Box::new(visits.iter().rev()) } else { Box::new(visits.iter()) };
+        for v in order {
+            if !flt.ok(v) {
+                continue;
+            }
+            if total >= offset && rows.len() < limit {
+                rows.push(json!(v));
+            }
+            total += 1;
+        }
+        return json!({ "rows": rows, "total": total, "count": total });
+    }
+    let hits: Vec<&Visit> = visits.iter().filter(|v| flt.ok(v)).collect();
+    let total = hits.len();
+    let list: Vec<Value> = if sort == "most" {
+        let mut by: HashMap<&str, (&Visit, u64)> = HashMap::new();
+        for v in &hits {
+            let e = by.entry(v.url.as_str()).or_insert((v, 0));
+            e.1 += 1;
+            if v.ts >= e.0.ts {
+                e.0 = v;
+            }
+        }
+        let mut l: Vec<(&Visit, u64)> = by.into_values().collect();
+        l.sort_by(|a, b| b.1.cmp(&a.1).then(b.0.ts.cmp(&a.0.ts)));
+        l.into_iter()
+            .map(|(v, n)| {
+                let mut o = json!(v);
+                o["visits"] = json!(n);
+                o
+            })
+            .collect()
+    } else {
+        let mut l: Vec<(String, &Visit)> = hits.iter().map(|v| (name_key(v), *v)).collect();
+        l.sort_by(|a, b| a.0.cmp(&b.0));
+        if sort == "za" {
+            l.reverse();
+        }
+        l.into_iter().map(|(_, v)| json!(v)).collect()
+    };
+    let count = list.len();
+    json!({ "rows": list.into_iter().skip(offset).take(limit).collect::<Vec<_>>(), "total": total, "count": count })
+}
+
+/// The sites of the visits matching: { rows: [{ host, visits, last, title, favicon }], total, count },
+/// the most visited first, or the fewest, the latest, by name.
+pub fn domains_in(visits: &[Visit], f: &Value) -> Value {
+    let flt = Filter::from(f);
+    let sort = f["sort"].as_str().unwrap_or("most");
+    let limit = f["limit"].as_u64().unwrap_or(300).clamp(1, 5000) as usize;
+    let offset = f["offset"].as_u64().unwrap_or(0) as usize;
+    struct D {
+        host: String,
+        visits: u64,
+        last: u64,
+        title: String,
+        favicon: String,
+    }
+    let mut by: HashMap<String, D> = HashMap::new();
+    let mut total = 0usize;
+    for v in visits {
+        if !flt.ok(v) {
+            continue;
+        }
+        total += 1;
+        let host = host_of(&v.url);
+        if host.is_empty() {
+            continue;
+        }
+        let d = by.entry(host.clone()).or_insert(D { host, visits: 0, last: 0, title: String::new(), favicon: String::new() });
+        d.visits += 1;
+        if v.ts >= d.last {
+            d.last = v.ts;
+            if !v.title.is_empty() {
+                d.title = v.title.clone();
+            }
+            if !v.favicon.is_empty() {
+                d.favicon = v.favicon.clone();
+            }
+        } else if d.favicon.is_empty() && !v.favicon.is_empty() {
+            d.favicon = v.favicon.clone();
+        }
+    }
+    let mut l: Vec<D> = by.into_values().collect();
+    match sort {
+        "least" => l.sort_by(|a, b| a.visits.cmp(&b.visits).then(b.last.cmp(&a.last))),
+        "recent" => l.sort_by(|a, b| b.last.cmp(&a.last)),
+        "az" | "za" => {
+            l.sort_by_cached_key(|d| fold(&d.host));
+            if sort == "za" {
+                l.reverse();
+            }
+        }
+        _ => l.sort_by(|a, b| b.visits.cmp(&a.visits).then(b.last.cmp(&a.last))),
+    }
+    let count = l.len();
+    let rows: Vec<Value> = l.into_iter().skip(offset).take(limit).map(|d| json!({ "host": d.host, "visits": d.visits, "last": d.last, "title": d.title, "favicon": d.favicon })).collect();
+    json!({ "rows": rows, "total": total, "count": count })
 }
 
 impl History {
@@ -582,34 +798,115 @@ impl History {
             .cloned()
             .collect()
     }
-    /// Pages for the address bar: grouped by URL, the most visited / most recent first.
+    /// Pages for the address bar: each page once, scored by how often and how lately it was opened
+    /// (every word typed, in any order, with or without marks), more when its site starts with what
+    /// is typed, the words start words of its title, or it is a site's front page; a site opened
+    /// often that starts with it comes as its front page too.
     pub fn suggest(&self, text: &str, limit: usize) -> Vec<Suggestion> {
-        let q = fold(text.trim());
-        if q.is_empty() {
+        let words: Vec<String> = text.split_whitespace().map(fold).collect();
+        if words.is_empty() {
             return vec![];
         }
-        let mut by_url: HashMap<&str, Suggestion> = HashMap::new();
-        for v in self.visits.iter().rev().take(20_000) {
-            let url_l = v.url.to_lowercase();
-            let bare = url_l.trim_start_matches("https://").trim_start_matches("http://").trim_start_matches("www.");
-            if !(bare.starts_with(&q) || url_l.contains(&q) || fold(&v.title).contains(&q)) {
+        let one = if words.len() == 1 {
+            let w = words[0].as_str();
+            let w = w.find("://").map_or(w, |i| &w[i + 3..]);
+            w.strip_prefix("www.").unwrap_or(w).to_string()
+        } else {
+            String::new()
+        };
+        struct Hit {
+            s: Suggestion,
+            score: f64,
+            root: bool,
+            host: String,
+        }
+        let now = now_ms();
+        let mut by_url: HashMap<&str, Hit> = HashMap::new();
+        let mut sites: HashMap<String, (f64, String, bool)> = HashMap::new(); // host -> (score, favicon, http)
+        for v in self.visits.iter().rev() {
+            let host = host_of(&v.url);
+            let site_hit = !one.is_empty() && host.starts_with(&one);
+            let s = hay(v);
+            let all = words.iter().all(|w| s.contains(w.as_str()));
+            if !all && !site_hit {
                 continue;
             }
-            let e = by_url.entry(&v.url).or_insert_with(|| Suggestion { url: v.url.clone(), title: v.title.clone(), favicon: v.favicon.clone(), count: 0, last: v.ts });
-            e.count += 1;
+            let age = now.saturating_sub(v.ts) as f64 / 86_400_000.0;
+            let w = if age < 1.0 { 100.0 } else if age < 4.0 { 80.0 } else if age < 14.0 { 60.0 } else if age < 31.0 { 40.0 } else if age < 90.0 { 20.0 } else { 10.0 };
+            if site_hit {
+                let e = sites.entry(host.clone()).or_insert((0.0, String::new(), v.url.starts_with("http:")));
+                e.0 += w;
+                if e.1.is_empty() && !v.favicon.is_empty() {
+                    e.1 = v.favicon.clone();
+                }
+            }
+            if !all {
+                continue;
+            }
+            if let Some(hit) = by_url.get_mut(v.url.as_str()) {
+                hit.score += w;
+                hit.s.count += 1;
+                continue;
+            }
+            let title = fold(&v.title);
+            let mut bonus = 0.0;
+            if !one.is_empty() && host.starts_with(&one) {
+                bonus += 400.0;
+            } else if !one.is_empty() && host.split('.').any(|l| l.starts_with(&one)) {
+                bonus += 150.0;
+            }
+            for word in &words {
+                if title.starts_with(word.as_str()) || title.contains(&format!(" {word}")) {
+                    bonus += 40.0;
+                }
+            }
+            let path = v.url.find("://").map(|i| &v.url[i + 3..]).and_then(|r| r.find(['/', '?', '#']).map(|j| &r[j..])).unwrap_or("");
+            let root = path.is_empty() || path == "/";
+            if root {
+                bonus += 30.0;
+            }
+            by_url.insert(&v.url, Hit { s: Suggestion { url: v.url.clone(), title: v.title.clone(), favicon: v.favicon.clone(), count: 1, last: v.ts }, score: w + bonus, root, host });
         }
-        let mut out: Vec<Suggestion> = by_url.into_values().collect();
-        let now = now_ms();
-        let score = |s: &Suggestion| {
-            let days = (now.saturating_sub(s.last)) as f64 / 86_400_000.0;
-            let bare = s.url.to_lowercase();
-            let bare = bare.trim_start_matches("https://").trim_start_matches("http://").trim_start_matches("www.");
-            let prefix = if bare.starts_with(&q) { 50.0 } else { 0.0 };
-            prefix + (s.count as f64).ln_1p() * 10.0 - days.min(90.0) * 0.3 - bare.len() as f64 * 0.05
-        };
-        out.sort_by(|a, b| score(b).partial_cmp(&score(a)).unwrap_or(std::cmp::Ordering::Equal));
+        let mut out: Vec<Hit> = by_url.into_values().collect();
+        // (a site of its own, at its front page, when it is opened often and none of its front pages is there)
+        for (host, (score, favicon, http)) in sites {
+            if score < 150.0 || out.iter().any(|h| h.root && h.host == host) {
+                continue;
+            }
+            let url = format!("{}://{}/", if http { "http" } else { "https" }, host);
+            out.push(Hit { s: Suggestion { url, title: host.clone(), favicon, count: 0, last: 0 }, score: 380.0 + score.min(600.0) / 10.0, root: true, host });
+        }
+        // (the same score: the one opened last first)
+        out.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal).then(b.s.last.cmp(&a.s.last)));
         out.truncate(limit);
-        out
+        out.into_iter().map(|h| h.s).collect()
+    }
+    /// Lịch sử's list and its sites (see find_in, domains_in)
+    pub fn find(&self, f: &Value) -> Value {
+        find_in(&self.visits, f)
+    }
+    pub fn domains(&self, f: &Value) -> Value {
+        domains_in(&self.visits, f)
+    }
+    /// Every visit matching taken out (the words typed, the site, the time span, one page): how many.
+    pub fn remove_where(&mut self, f: &Value) -> usize {
+        let flt = Filter::from(f);
+        let before = self.visits.len();
+        self.visits.retain(|v| !flt.ok(v));
+        let n = before - self.visits.len();
+        if n > 0 {
+            self.dirty = true;
+        }
+        n
+    }
+    pub fn remove_ids(&mut self, ids: &[String]) -> usize {
+        let before = self.visits.len();
+        self.visits.retain(|v| !ids.contains(&v.id));
+        let n = before - self.visits.len();
+        if n > 0 {
+            self.dirty = true;
+        }
+        n
     }
     pub fn touch(&mut self) {
         self.dirty = true;
